@@ -1,5 +1,5 @@
 ---
-title: "Imaging Techniques Comparison in Synovitis Diagnosis"
+title: "Imaging Techniques Comparison in Diagnosis"
 author: ""
 output:
   html_document:
@@ -56,20 +56,7 @@ library(caret) #para metricas de rendimiento de la clasificación
 <br>
 <hr style="border-top: 2px solid black;">
 
-**1. Objetivos**  
 
-Este estudio observacional transversal tiene como objetivo comparar el rendimiento diagnóstico de distintas técnicas de imagen. Se evalúan cinco modalidades.
-  
-**2. Métodos**
-  
-Dado que todas las variables analizadas son dicotómicas, no es posible aplicar curvas ROC ni calcular el AUC, ya que estas herramientas requieren un parámetro continuo o probabilístico para definir diferentes umbrales de decisión. En su lugar, se empleará el índice Kappa de Cohen como medida de concordancia con la técnica de referencia. Tal como argumenta Ben-David, el Kappa ofrece una alternativa robusta al AUC en escenarios donde las decisiones son binarias y la probabilidad de acuerdos aleatorios debe ser tenida en cuenta. De hecho, el autor demuestra que Kappa y ROC están matemáticamente relacionados, y que el primero puede capturar la precisión del clasificador compensando por el azar, lo que lo convierte en una herramienta válida y simple cuando la AUC no es aplicable.<sup>1<[ruta]>
-
-Además, se calcularán las métricas clásicas de rendimiento diagnóstico: sensibilidad (proporción de verdaderos positivos detectados), especificidad (proporción de verdaderos negativos correctamente identificados), valor predictivo positivo (probabilidad de que un resultado positivo sea realmente un caso), y valor predictivo negativo (probabilidad de que un resultado negativo sea verdaderamente un no caso). Estas métricas complementarán la interpretación del Kappa y se presentarán mediante las correspondientes matrices de confusión, lo que permitirá valorar con mayor precisión la utilidad clínica de cada técnica.
-  
-<sup>1<[ruta]> Ben-David A. About the relationship between ROC curves and Cohen’s kappa. Engineering Applications of Artificial Intelligence. 2008; https:[ruta]
-
-<hr style="border-top: 2px solid black;">
-<br>
 
 ## 1. Descriptivos
 
@@ -81,7 +68,6 @@ df<-read_excel('data.xlsx')
 ```
 
 ```{r}
-### Añadimos variable global para cada técnica
 
 df <- df %>%
   mutate(
@@ -212,15 +198,15 @@ evaluar_comparacion <- function(
   nombre_eje_x = "Referencia",
   nombre_eje_y = "Predicción"
 ) {
-  # Asegurarse de que sean factores con niveles 1 y 0
+ 
   predicho <- factor(predicho, levels = c(1, 0))
   referencia <- factor(referencia, levels = c(1, 0))
   
-  # Calcular matriz de confusión
+
   cm <- confusionMatrix(predicho, referencia, positive = "1")
   print(cm)
   
-  # Extraer métricas clave
+ 
   metricas <- data.frame(
     Comparación = nombre_comparacion,
     Sensibilidad = cm$byClass["Sensitivity"],
@@ -230,7 +216,7 @@ evaluar_comparacion <- function(
     Kappa = cm$overall["Kappa"]
   )
   
-  # Gráfico de barras sin título
+
   df_barras <- tidyr::pivot_longer(metricas, cols = -Comparación, names_to = "Métrica", values_to = "Valor")
   
   g1 <- ggplot(df_barras, aes(x = Métrica, y = Valor)) +
@@ -241,7 +227,7 @@ evaluar_comparacion <- function(
     theme_gray() +
     theme(plot.title = element_blank())
   
-  # Heatmap de la matriz de confusión sin título
+ 
   cm_table <- as.table(cm$table)
   df_cm <- as.data.frame(cm_table)
   names(df_cm) <- c("Predicción", "Referencia", "Frecuencia")
@@ -254,14 +240,14 @@ evaluar_comparacion <- function(
     theme_bw() +
     theme(plot.title = element_blank())
   
-  # Título general
+
   grid.arrange(
     g1, g2,
     nrow = 1,
     top = paste("Métricas de rendimiento:", nombre_comparacion)
   )
   
-  # Devolver métricas como data.frame
+  
   return(metricas)
 }
 
@@ -333,17 +319,17 @@ En las siguientes comparaciones, primero se evaluará la concordancia con el ín
 ```{r}
 
 kappa_por_articulacion <- function(df, gold_prefix, test_prefix) {
-  # Seleccionar variables que empiecen por los prefijos indicados (excluyendo globales)
+
   vars_gold <- names(df)[startsWith(names(df), paste0(gold_prefix, "_")) & !str_detect(names(df), "global")]
   vars_test <- names(df)[startsWith(names(df), paste0(test_prefix, "_")) & !str_detect(names(df), "global")]
   
-  # Extraer nombres de articulaciones
+ 
   articulaciones <- intersect(
     str_remove(vars_gold, paste0("^", gold_prefix, "_")),
     str_remove(vars_test, paste0("^", test_prefix, "_"))
   )
   
-  # Calcular Kappa por articulación
+ 
   resultados <- lapply(articulaciones, function(art) {
     var_gold <- paste0(gold_prefix, "_", art)
     var_test <- paste0(test_prefix, "_", art)
@@ -351,7 +337,7 @@ kappa_por_articulacion <- function(df, gold_prefix, test_prefix) {
     datos <- df[, c(var_gold, var_test)]
     colnames(datos) <- c("Gold", "Evaluada")
     
-    # Calcular Kappa de Cohen
+  
     kappa_res <- kappa2(datos)
     
     tibble(
@@ -372,7 +358,7 @@ res<-kappa_por_articulacion(df, gold_prefix = "RMH", test_prefix = "ECO")%>%
   arrange(desc(Kappa))
 
 res %>%
-  kbl(caption = "Tabla 3. Índice Kappa por articulación en RM sin contraste vs Ecografia") %>%
+  kbl(caption = "Tabla 3.) %>%
   kable_classic(full_width = F, html_font = "Cambria")%>%
   kable_styling(font_size = 15)%>%
   column_spec(1:3,width = "6em")
@@ -392,7 +378,7 @@ res<-kappa_por_articulacion(df, gold_prefix = "RMS", test_prefix = "SWE")%>%
   arrange(desc(Kappa))
 
 res %>%
-  kbl(caption = "Tabla 4. Índice Kappa por articulación en RM con contraste vs SWE") %>%
+  kbl(caption = "Tabla 4.) %>%
   kable_classic(full_width = F, html_font = "Cambria")%>%
   kable_styling(font_size = 15)%>%
   column_spec(1:3,width = "6em")
